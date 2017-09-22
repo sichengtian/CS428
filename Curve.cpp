@@ -64,8 +64,8 @@ void Curve::drawCurve(Color curveColor, float curveThickness, int window)
 //Comp function sort curvePoint by distance
 bool disComp(curvePoint P1, curvePoint P2) 
 { 
-	float d1 = sqrt(pow(P1.x, 2) + pow(P1.y, 2) + pow(P1.x, 2));
-	float d2 = sqrt(pow(P2.x, 2) + pow(P2.y, 2) + pow(P2.x, 2));
+	float d1 = sqrt(pow(P1.x, 2) + pow(P1.y, 2) + pow(P1.z, 2));
+	float d2 = sqrt(pow(P2.x, 2) + pow(P2.y, 2) + pow(P2.z, 2));
 	return (d1<d2); 
 }
 // Sort controlPoints vector in ascending order: min-first
