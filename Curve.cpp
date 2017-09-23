@@ -122,21 +122,34 @@ bool Curve::findTimeInterval(unsigned int& nextPoint, float time) {
 }
 
 // Implement Hermite curve
-Point Curve::useHermiteCurve(const unsigned int nextPoint, const float time) {
+Point Curve::useHermiteCurve(const unsigned int nextPoint, const float time)
+{
 	Point newPosition;
 	float normalTime, intervalTime;
 
-	//================DELETE THIS PART AND THEN START CODING===================
-	static bool flag = false;
-	if (!flag) {
-		std::cerr << "ERROR>>>>Member function useHermiteCurve is not implemented!" << std::endl;
-		flag = true;
-	}
-	//=========================================================================
+	int sPoint = nextPoint-1;		//starting point
+	int ePoint = nextPoint;			//end point
+
+	intervalTime = controlPoints[ePoint].time - controlPoints[sPoint].time;
+	normalTime = (time - controlPoints[sPoint].time) / intervalTime;
 
 	// Calculate position at t = time on Hermite curve
+	float newPositionX = (controlPoints[sPoint].position.x * (2*normalTime*normalTime*normalTime-3*normalTime*normalTime+1))
+						+(controlPoints[sPoint].tangent.x * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime))
+						+(controlPoints[ePoint].position.x * (-2*normalTime*normalTime*normalTime+3*normalTime*normalTime))
+						+(controlPoints[ePoint].tangent.x * (normalTime*normalTime*normalTime-normalTime*normalTime));
 
+	float newPositionY = (controlPoints[sPoint].position.y * (2*normalTime*normalTime*normalTime-3*normalTime*normalTime+1))
+						+(controlPoints[sPoint].tangent.y * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime))
+						+(controlPoints[ePoint].position.y * (-2*normalTime*normalTime*normalTime+3*normalTime*normalTime))
+						+(controlPoints[ePoint].tangent.y * (normalTime*normalTime*normalTime-normalTime*normalTime));
+
+	float newPositionZ = (controlPoints[sPoint].position.z * (2*normalTime*normalTime*normalTime-3*normalTime*normalTime+1))
+						+(controlPoints[sPoint].tangent.z * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime))
+						+(controlPoints[ePoint].position.z * (-2*normalTime*normalTime*normalTime+3*normalTime*normalTime))
+						+(controlPoints[ePoint].tangent.z * (normalTime*normalTime*normalTime-normalTime*normalTime));
 	// Return result
+	newPosition = Point(newPositionX,newPositionY,newPositionZ);
 	return newPosition;
 }
 
