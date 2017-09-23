@@ -109,17 +109,17 @@ bool Curve::calculatePoint(Point& outputPoint, float time)
 // Check Roboustness
 bool Curve::checkRobust()
 {
-	//================DELETE THIS PART AND THEN START CODING===================
-	static bool flag = false;
-	if (!flag)
-	{
-		std::cerr << "ERROR>>>>Member function checkRobust is not implemented!" << std::endl;
-		flag = true;
+	if(type == hermiteCurve && controlPoints.size >= 2){
+		
+		return true;
 	}
-	//=========================================================================
+	
+	else if(type == catmullCurve && controlPoints.size >= 3){
+		
+		return true;
+	}
 
-
-	return true;
+	return false;
 }
 
 // Find the current time interval (i.e. index of the next control point to follow according to current time)
