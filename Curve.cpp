@@ -158,15 +158,67 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 	Point newPosition;
 
 	//================DELETE THIS PART AND THEN START CODING===================
-	static bool flag = false;
-	if (!flag) {
-		std::cerr << "ERROR>>>>Member function useCatmullCurve is not implemented!" << std::endl;
-		flag = true;
-	}
+	//static bool flag = false;
+	//if (!flag)
+	//{
+	//	std::cerr << "ERROR>>>>Member function useCatmullCurve is not implemented!" << std::endl;
+	//	flag = true;
+	//}
 	//=========================================================================
 
 	// Calculate position at t = time on Catmull-Rom curve
+	//1.calculate Tangent line (M0, M1)
+	Point p0=controlPoints[nextPoint-1].position;
+	Point p1=controlPoints[nextPoint].position;
+	Point m0=getTangent(nextPoint-1);
+	Point m1=getTangent(nextPoint);
+	//2.calculate equation H(t)
+	float TimeInterval=controlPoints[p1].time-controlPoints[p0].time;
+	float t=(time-controlPoints[p0].time)/intervalTime;
 
+	newPosition.x=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.x 
+					+ (t * t * t - 2.0f * t * t + t) * m0.x 
+					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.x 
+					+ (t * t * t - t * t) * m1.x;
+	newPosition.y=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.y 
+					+ (t * t * t - 2.0f * t * t + t) * m0.y 
+					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.y 
+					+ (t * t * t - t * t) * m1.y;
+	newPosition.z=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.z 
+					+ (t * t * t - 2.0f * t * t + t) * m0.z 
+					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.z 
+					+ (t * t * t - t * t) * m1.z;
 	// Return result
 	return newPosition;
+}
+
+Point Curve::getTangent(int index){
+	//index is current position
+	Point tangent;
+	if(index==0){//if is first point
+		Point current=controlPoints[index].position;
+		Point after=controlPoints[index+1].position;
+
+		tangent.x=after.x-current.x;
+		tangent.y=after.y-current.y;
+		tangent.z=after.z-current.z;
+	}else if(index==controlPoints.size()-1){//if is last point
+		Point current=controlPoints[index].position;
+		Point before=controlPoints[index-1].position;
+
+		tangent.x=current.x-before.x;
+		tangent.y=current.y-before.y;
+		tangent.z=current.z-before.z;
+	}else{//if is point in the middle
+		Point before=controlPoints[index-1].position;
+		Point after=controlPoints[index+1].position;
+		Point current=controlPoints[index].position;
+
+		tangent.x=0.5f*(after.x-before.x);
+		tangent.y=0.5f*(after.y-before.y);
+		tangent.z=0.5f*(after.z-before.z);
+	}
+
+	return tangent;
+
 }
