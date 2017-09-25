@@ -39,7 +39,9 @@ void Curve::addControlPoints(const std::vector<CurvePoint>& inputPoints) {
 // Draw the curve shape on screen, usign window as step size (bigger window: less accurate shape)
 void Curve::drawCurve(Color curveColor, float curveThickness, int window) {
 #ifdef ENABLE_GUI
-
+	if (!checkRobust()) {
+		return;
+	}
 	Point startingPoint;
 	Point finalPoint;
 	int size = controlPoints.size();
@@ -47,13 +49,13 @@ void Curve::drawCurve(Color curveColor, float curveThickness, int window) {
 	float i;
 	for(i=0; i < lastPointTime; i+=window){
 		calculatePoint(startingPoint,i);
-		if(i+window <= lastPointTime){
+		if(i+window < lastPointTime){
 			calculatePoint(finalPoint,i+window);
 		}
 		else{
-			calculatePoint(finalPoint,i);
+			calculatePoint(finalPoint,lastPointTime);
 		}
-		DrawLib::drawLine(start, end, curveColor, curveThickness);
+		DrawLib::drawLine(startingPoint, finalPoint, curveColor, curveThickness);
 	}
 
 	// Robustness: make sure there is at least two control point: start and end points
@@ -65,9 +67,8 @@ void Curve::drawCurve(Color curveColor, float curveThickness, int window) {
 }
 //Comp function sort curvePoint by distance
 bool disComp(const CurvePoint &P1, const CurvePoint &P2) {
-	float d1 = sqrt(pow(P1.position.x, 2) + pow(P1.position.y, 2) + pow(P1.position.z, 2));
-	float d2 = sqrt(pow(P2.position.x, 2) + pow(P2.position.y, 2) + pow(P2.position.z, 2));
-	return (d1<d2);
+	
+	return (P1.time<P2.time);
 }
 // Sort controlPoints vector in ascending order: min-first
 void Curve::sortControlPoints() {
@@ -143,19 +144,19 @@ Point Curve::useHermiteCurve(const unsigned int nextPoint, const float time)
 
 	// Calculate position at t = time on Hermite curve
 	newPosition.x = (controlPoints[sPoint].position.x * (2*normalTime*normalTime*normalTime-3*normalTime*normalTime+1))
-						+(controlPoints[sPoint].tangent.x * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime))
+						+(controlPoints[sPoint].tangent.x * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime) * intervalTime)
 						+(controlPoints[ePoint].position.x * (-2*normalTime*normalTime*normalTime+3*normalTime*normalTime))
-						+(controlPoints[ePoint].tangent.x * (normalTime*normalTime*normalTime-normalTime*normalTime));
+						+(controlPoints[ePoint].tangent.x * (normalTime*normalTime*normalTime-normalTime*normalTime) * intervalTime);
 
 	newPosition.y = (controlPoints[sPoint].position.y * (2*normalTime*normalTime*normalTime-3*normalTime*normalTime+1))
-						+(controlPoints[sPoint].tangent.y * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime))
+						+(controlPoints[sPoint].tangent.y * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime)* intervalTime)
 						+(controlPoints[ePoint].position.y * (-2*normalTime*normalTime*normalTime+3*normalTime*normalTime))
-						+(controlPoints[ePoint].tangent.y * (normalTime*normalTime*normalTime-normalTime*normalTime));
+						+(controlPoints[ePoint].tangent.y * (normalTime*normalTime*normalTime-normalTime*normalTime)* intervalTime);
 
 	newPosition.z = (controlPoints[sPoint].position.z * (2*normalTime*normalTime*normalTime-3*normalTime*normalTime+1))
-						+(controlPoints[sPoint].tangent.z * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime))
+						+(controlPoints[sPoint].tangent.z * (normalTime*normalTime*normalTime-2*normalTime*normalTime+normalTime)* intervalTime)
 						+(controlPoints[ePoint].position.z * (-2*normalTime*normalTime*normalTime+3*normalTime*normalTime))
-						+(controlPoints[ePoint].tangent.z * (normalTime*normalTime*normalTime-normalTime*normalTime));
+						+(controlPoints[ePoint].tangent.z * (normalTime*normalTime*normalTime-normalTime*normalTime)* intervalTime);
 	// Return result
 	return newPosition;
 }
@@ -163,25 +164,68 @@ Point Curve::useHermiteCurve(const unsigned int nextPoint, const float time)
 // Implement Catmull-Rom curve
 Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 	Point newPosition;
-
-	//================DELETE THIS PART AND THEN START CODING===================
-	//static bool flag = false;
-	//if (!flag)
-	//{
-	//	std::cerr << "ERROR>>>>Member function useCatmullCurve is not implemented!" << std::endl;
-	//	flag = true;
-	//}
-	//=========================================================================
-
-	// Calculate position at t = time on Catmull-Rom curve
 	//1.calculate Tangent line (M0, M1)
 	Point p0=controlPoints[nextPoint-1].position;
 	Point p1=controlPoints[nextPoint].position;
-	Point m0=getTangent(nextPoint-1);
-	Point m1=getTangent(nextPoint);
+
+
+	Point m0;
+	if (nextPoint-1 == 0) {//if is first point
+		Point current = controlPoints[nextPoint - 1].position;
+		Point after = controlPoints[nextPoint - 1 + 1].position;
+
+		m0.x = after.x - current.x;
+		m0.y = after.y - current.y;
+		m0.z = after.z - current.z;
+	}
+	else if (nextPoint - 1 == controlPoints.size() - 1) {//if is last point
+		Point current = controlPoints[nextPoint - 1].position;
+		Point before = controlPoints[nextPoint - 1 - 1].position;
+
+		m0.x = current.x - before.x;
+		m0.y = current.y - before.y;
+		m0.z = current.z - before.z;
+	}
+	else {//if is point in the middle
+		Point before = controlPoints[nextPoint - 1 - 1].position;
+		Point after = controlPoints[nextPoint - 1 + 1].position;
+		Point current = controlPoints[nextPoint - 1].position;
+
+		m0.x = 0.5f*(after.x - before.x);
+		m0.y = 0.5f*(after.y - before.y);
+		m0.z = 0.5f*(after.z - before.z);
+	}
+	Point m1;
+	if (nextPoint == 0) {//if is first point
+		Point current = controlPoints[nextPoint].position;
+		Point after = controlPoints[nextPoint + 1].position;
+
+		m1.x = after.x - current.x;
+		m1.y = after.y - current.y;
+		m1.z = after.z - current.z;
+	}
+	else if (nextPoint == controlPoints.size() - 1) {//if is last point
+		Point current = controlPoints[nextPoint].position;
+		Point before = controlPoints[nextPoint - 1].position;
+
+		m1.x = current.x - before.x;
+		m1.y = current.y - before.y;
+		m1.z = current.z - before.z;
+	}
+	else {//if is point in the middle
+		Point before = controlPoints[nextPoint - 1].position;
+		Point after = controlPoints[nextPoint + 1].position;
+		Point current = controlPoints[nextPoint].position;
+
+		m1.x = 0.5f*(after.x - before.x);
+		m1.y = 0.5f*(after.y - before.y);
+		m1.z = 0.5f*(after.z - before.z);
+	}
+
+
 	//2.calculate equation H(t)
-	float TimeInterval=controlPoints[p1].time-controlPoints[p0].time;
-	float t=(time-controlPoints[p0].time)/intervalTime;
+	float TimeInterval=controlPoints[nextPoint].time-controlPoints[nextPoint-1].time;
+	float t=(time-controlPoints[nextPoint-1].time)/TimeInterval;
 
 	newPosition.x=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.x 
 					+ (t * t * t - 2.0f * t * t + t) * m0.x 
@@ -191,41 +235,10 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 					+ (t * t * t - 2.0f * t * t + t) * m0.y 
 					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.y 
 					+ (t * t * t - t * t) * m1.y;
-	newPosition.=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.z
+	newPosition.z=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.z
 					+ (t * t * t - 2.0f * t * t + t) * m0.z 
 					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.z 
 					+ (t * t * t - t * t) * m1.z;
 	// Return result
 	return newPosition;
-}
-
-Point Curve::getTangent(int index){
-	//index is current position
-	Point tangent;
-	if(index==0){//if is first point
-		Point current=controlPoints[index].position;
-		Point after=controlPoints[index+1].position;
-
-		tangent.x=after.x-current.x;
-		tangent.y=after.y-current.y;
-		tangent.z=after.z-current.z;
-	}else if(index==controlPoints.size()-1){//if is last point
-		Point current=controlPoints[index].position;
-		Point before=controlPoints[index-1].position;
-
-		tangent.x=current.x-before.x;
-		tangent.y=current.y-before.y;
-		tangent.z=current.z-before.z;
-	}else{//if is point in the middle
-		Point before=controlPoints[index-1].position;
-		Point after=controlPoints[index+1].position;
-		Point current=controlPoints[index].position;
-
-		tangent.x=0.5f*(after.x-before.x);
-		tangent.y=0.5f*(after.y-before.y);
-		tangent.z=0.5f*(after.z-before.z);
-	}
-
-	return tangent;
-
 }
