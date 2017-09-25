@@ -170,7 +170,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 
 
 	Point m0;
-	if (nextPoint-1 == 0) {//if is first point
+	if (nextPoint-1 == 0) {//if p0 is first point
 		Point current = controlPoints[nextPoint - 1].position;
 		Point after = controlPoints[nextPoint - 1 + 1].position;
 
@@ -178,7 +178,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 		m0.y = after.y - current.y;
 		m0.z = after.z - current.z;
 	}
-	else if (nextPoint - 1 == controlPoints.size() - 1) {//if is last point
+	else if (nextPoint - 1 == controlPoints.size() - 1) {//if p0 is last point
 		Point current = controlPoints[nextPoint - 1].position;
 		Point before = controlPoints[nextPoint - 1 - 1].position;
 
@@ -186,7 +186,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 		m0.y = current.y - before.y;
 		m0.z = current.z - before.z;
 	}
-	else {//if is point in the middle
+	else {//if p0 is point in the middle
 		Point before = controlPoints[nextPoint - 1 - 1].position;
 		Point after = controlPoints[nextPoint - 1 + 1].position;
 		Point current = controlPoints[nextPoint - 1].position;
@@ -196,7 +196,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 		m0.z = 0.5f*(after.z - before.z);
 	}
 	Point m1;
-	if (nextPoint == 0) {//if is first point
+	if (nextPoint == 0) {//if p1 is first point
 		Point current = controlPoints[nextPoint].position;
 		Point after = controlPoints[nextPoint + 1].position;
 
@@ -204,7 +204,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 		m1.y = after.y - current.y;
 		m1.z = after.z - current.z;
 	}
-	else if (nextPoint == controlPoints.size() - 1) {//if is last point
+	else if (nextPoint == controlPoints.size() - 1) {//if p1 is last point
 		Point current = controlPoints[nextPoint].position;
 		Point before = controlPoints[nextPoint - 1].position;
 
@@ -212,7 +212,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 		m1.y = current.y - before.y;
 		m1.z = current.z - before.z;
 	}
-	else {//if is point in the middle
+	else {//if p1 is point in the middle
 		Point before = controlPoints[nextPoint - 1].position;
 		Point after = controlPoints[nextPoint + 1].position;
 		Point current = controlPoints[nextPoint].position;
