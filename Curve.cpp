@@ -40,13 +40,21 @@ void Curve::addControlPoints(const std::vector<CurvePoint>& inputPoints) {
 void Curve::drawCurve(Color curveColor, float curveThickness, int window) {
 #ifdef ENABLE_GUI
 
-	//================DELETE THIS PART AND THEN START CODING===================
-	static bool flag = false;
-	if (!flag) {
-		std::cerr << "ERROR>>>>Member function drawCurve is not implemented!" << std::endl;
-		flag = true;
+	Point startingPoint;
+	Point finalPoint;
+	int size = controlPoints.size();
+	float lastPointTime = controlPoints[size-1].time;
+	float i;
+	for(i=0; i < lastPointTime; i+=window){
+		calculatePoint(startingPoint,i);
+		if(i+window <= lastPointTime){
+			calculatePoint(finalPoint,i+window);
+		}
+		else{
+			calculatePoint(finalPoint,i);
+		}
+		DrawLib::drawLine(start, end, curveColor, curveThickness);
 	}
-	//=========================================================================
 
 	// Robustness: make sure there is at least two control point: start and end points
 	// Move on the curve from t=0 to t=finalPoint, using window as step size, and linearly interpolate the curve points
@@ -183,7 +191,7 @@ Point Curve::useCatmullCurve(const unsigned int nextPoint, const float time) {
 					+ (t * t * t - 2.0f * t * t + t) * m0.y 
 					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.y 
 					+ (t * t * t - t * t) * m1.y;
-	newPosition.z=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.z 
+	newPosition.=(2.0f * t * t * t - 3.0f * t * t + 1.0f) * p0.z
 					+ (t * t * t - 2.0f * t * t + t) * m0.z 
 					+ (-2.0f * t * t * t + 3.0f * t * t) * p1.z 
 					+ (t * t * t - t * t) * m1.z;
